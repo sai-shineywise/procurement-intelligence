@@ -1,0 +1,92 @@
+<!-- register.html (templates/register.html) - NO CHANGES NEEDED from the previous complete example -->
+
+{% extends 'base.html' %}
+
+{% block title %} Register {% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Register</h2>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger" role="alert">
+                                    {% for error in form.non_field_errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            <div class="mb-3">
+                                <label for="id_username" class="form-label">Username:</label>
+                                <input type="text" name="username" id="id_username"
+                                       class="form-control {% if form.username.errors %}is-invalid{% endif %}" required>
+                                {% if form.username.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.username.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_email" class="form-label">Email:</label>
+                                <input type="email" name="email" id="id_email"
+                                       class="form-control {% if form.email.errors %}is-invalid{% endif %}" required>
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.email.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Password Fields -->
+                            <div class="mb-3">
+                                <label for="id_password1" class="form-label">Password:</label>
+                                <input type="password" name="password1" id="id_password1"
+                                       class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
+                                       required>
+                                {% if form.password1.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.password1.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_password2" class="form-label">Confirm Password:</label>
+                                <input type="password" name="password2" id="id_password2"
+                                       class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
+                                       required>
+                                {% if form.password2.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.password2.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Register</button>
+                        </form>
+                    </div>
+                    <div class="card-footer text-muted">
+                        Already have an account? <a href="{% url 'login' %}">Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
