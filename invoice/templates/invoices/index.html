@@ -1,110 +1,252 @@
 {% extends 'base.html' %}
+
 {% block content %}
-    <style>
-        /* ... (other styles) ... */
-        #result {
-            margin-top: 20px;
-        }
+<style>
+    /* ... (Keep existing styles) ... */
+    #result {
+        margin-top: 20px;
+    }
 
-        .upload-progress {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .upload-progress .spinner-border, .upload-progress span{
-          display: none;
-        }
+    .upload-progress {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .upload-progress .spinner-border, .upload-progress span{
+      display: none;
+    }
 
-        .remove-btn {
-            display: inline-block;
-        }
+    .remove-btn {
+        display: inline-block;
+    }
 
-        .file-label {
-            display: inline-block;
-            padding: 6px 12px;
-            cursor: pointer;
-            background-color: #f8f9fa;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-        }
-        #pdfFileInput{
-            display:none;
-        }
+    .file-label {
+        display: inline-block;
+        padding: 6px 12px;
+        cursor: pointer;
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+    }
+    #pdfFileInput{
+        display:none;
+    }
 
-        .user-message, .model-response {
-            padding: 8px 12px;
-            margin-bottom: 5px;
-            border-radius: 5px;
-        }
-        .user-message {
-            background-color: #dcf8c6;
-            text-align: right;
-            align-self: flex-end;
-        }
-        .model-response {
-            background-color: #f0f0f0;
-            text-align: left;
-            align-self: flex-start;
-        }
-        .error-response{
-           color: red;
-        }
+    .user-message, .model-response {
+        padding: 8px 12px;
+        margin-bottom: 5px;
+        border-radius: 5px;
+    }
+    .user-message {
+        background-color: #dcf8c6;
+        text-align: right;
+        align-self: flex-end;
+    }
+    .model-response {
+        background-color: #f0f0f0;
+        text-align: left;
+        align-self: flex-start;
+    }
+    .error-response{
+       color: red;
+    }
 
-        #chatModal .modal-body {
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 110px);
-            overflow: hidden;
-        }
+    #clear-history-btn{
+      margin-left: 5px;
+    }
 
-        #chatbox {
-            flex: 1;
-            overflow-y: auto;
-            margin-bottom: 10px;
-        }
-          #chat-input-area {
-            width: 100%;
-        }
-        #clear-history-btn{
-          margin-left: 5px;
-        }
+    /* Loader CSS */
+    .loader {
+        width: 60px;
+        aspect-ratio: 2;
+        --_g: no-repeat radial-gradient(circle closest-side,#000 90%,#0000);
+        background:
+          var(--_g) 0%   50%,
+          var(--_g) 50%  50%,
+          var(--_g) 100% 50%;
+        background-size: calc(100%/3) 50%;
+        animation: l3 1s infinite linear;
+    }
+    @keyframes l3 {
+        20%{background-position:0%   0%, 50%  50%,100%  50%}
+        40%{background-position:0% 100%, 50%   0%,100%  50%}
+        60%{background-position:0%  50%, 50% 100%,100%   0%}
+        80%{background-position:0%  50%, 50%  50%,100% 100%}
+    }
 
-        /* Loader CSS */
-        .loader {
-          width: 60px;
-          aspect-ratio: 2;
-          --_g: no-repeat radial-gradient(circle closest-side,#000 90%,#0000);
-          background:
-            var(--_g) 0%   50%,
-            var(--_g) 50%  50%,
-            var(--_g) 100% 50%;
-          background-size: calc(100%/3) 50%;
-          animation: l3 1s infinite linear;
-        }
-        @keyframes l3 {
-            20%{background-position:0%   0%, 50%  50%,100%  50%}
-            40%{background-position:0% 100%, 50%   0%,100%  50%}
-            60%{background-position:0%  50%, 50% 100%,100%   0%}
-            80%{background-position:0%  50%, 50%  50%,100% 100%}
-        }
-        /* Hide loader initially */
-        #chat-loader {
-            display: none;
-            justify-content: center;
-            align-items: center;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            z-index: 10;
-        }
+    /* Chat Assistant Styles */
+    #chat-assistant {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 350px;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        background-color: white;
+        z-index: 1000;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 500px;
+    }
 
-    </style>
+    .chat-header {
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+    }
 
-    <!--  Include Showdown.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    .chat-header h5 {
+        margin: 0;
+        font-size: 1rem;
+    }
+
+   /* Enhanced Chat Toggle Button Styles */
+    .chat-toggle-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: #007bff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        z-index: 999;
+        transition: all 0.3s ease;
+    }
+
+    .chat-toggle-btn:hover {
+        transform: scale(1.05);
+        background-color: #0069d9;
+    }
+
+    .chat-icon-container {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        background-color: white;
+    }
+
+    .chat-toggle-btn .fas {
+        color: #007bff;
+        font-size: 20px;
+    }
+
+    /* Keep your existing animation */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    .chat-toggle-btn svg {
+    width: 28px;
+    height: 28px;
+}
+
+
+    #chatbox {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        position: relative;
+        height: 300px;
+        background-color: #f9f9f9;
+    }
+
+    #chat-loader {
+        display: none;
+        justify-content: center;
+        align-items: center;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.8);
+        z-index: 10;
+    }
+
+    #chat-input-area {
+        display: flex;
+        padding: 10px;
+        border-top: 1px solid #ccc;
+        background-color: white;
+    }
+
+    #chat-input {
+        flex: 1;
+        margin-right: 5px;
+        border-radius: 4px;
+        border: 1px solid #ced4da;
+        padding: 6px 12px;
+    }
+
+    /* Animation for chat toggle */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+
+    /* Typing indicator styles */
+    .typing-indicator {
+        background-color: #f0f0f0;
+        padding: 8px 12px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+        align-self: flex-start;
+        display: inline-block;
+    }
+
+    .typing-indicator span {
+        height: 8px;
+        width: 8px;
+        float: left;
+        margin: 0 1px;
+        background-color: #9E9EA1;
+        display: block;
+        border-radius: 50%;
+        opacity: 0.4;
+    }
+
+    .typing-indicator span:nth-of-type(1) {
+        animation: 1s blink infinite 0.3333s;
+    }
+
+    .typing-indicator span:nth-of-type(2) {
+        animation: 1s blink infinite 0.6666s;
+    }
+
+    .typing-indicator span:nth-of-type(3) {
+        animation: 1s blink infinite 0.9999s;
+    }
+
+    @keyframes blink {
+        50% {
+            opacity: 1;
+        }
+    }
+</style>
+
+<!--  Include Showdown.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
 
 <div class="container">
     <h1 class="mb-4">Procurement Intelligence</h1>
@@ -125,11 +267,11 @@
             </div>
         </div>
         <div class="col-md-6 text-end">
-            <button id="processBtn" class="btn btn-success" disabled>Process Invoices</button>
+            <button id="processBtn" class="btn btn-success" disabled>Process Documents</button>
         </div>
     </div>
 
-    <h2 class="mt-4 mb-3">Uploaded Invoices:</h2>
+    <h2 class="mt-4 mb-3">Uploaded Documents:</h2>
     <table class="table">
         <thead>
         <tr>
@@ -143,31 +285,29 @@
     </table>
 
     <div id="result" class="mt-4"></div>
+</div>
 
-       <button id="openChatBtn" class="btn btn-primary mt-3" style="display: none;" data-bs-toggle="modal" data-bs-target="#chatModal">
-        Chat with Model
-    </button>
+<!-- Chat Assistant Toggle Button -->
+<div class="chat-toggle-btn" id="chatToggleBtn" style="display: none;">
+   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path fill="#ffffff" d="M284 224.8a34.1 34.1 0 1 0 34.3 34.1A34.2 34.2 0 0 0 284 224.8zm-110.5 0a34.1 34.1 0 1 0 34.3 34.1A34.2 34.2 0 0 0 173.6 224.8zm220.9 0a34.1 34.1 0 1 0 34.3 34.1A34.2 34.2 0 0 0 394.5 224.8zm153.8-55.3c-15.5-24.2-37.3-45.6-64.7-63.6-52.9-34.8-122.4-54-195.7-54a406 406 0 0 0 -72 6.4 238.5 238.5 0 0 0 -49.5-36.6C99.7-11.7 40.9 .7 11.1 11.4A14.3 14.3 0 0 0 5.6 34.8C26.5 56.5 61.2 99.3 52.7 138.3c-33.1 33.9-51.1 74.8-51.1 117.3 0 43.4 18 84.2 51.1 118.1 8.5 39-26.2 81.8-47.1 103.5a14.3 14.3 0 0 0 5.6 23.3c29.7 10.7 88.5 23.1 155.3-10.2a238.7 238.7 0 0 0 49.5-36.6A406 406 0 0 0 288 460.1c73.3 0 142.8-19.2 195.7-54 27.4-18 49.1-39.4 64.7-63.6 17.3-26.9 26.1-55.9 26.1-86.1C574.4 225.4 565.6 196.4 548.3 169.5zM285 409.9a345.7 345.7 0 0 1 -89.4-11.5l-20.1 19.4a184.4 184.4 0 0 1 -37.1 27.6 145.8 145.8 0 0 1 -52.5 14.9c1-1.8 1.9-3.6 2.8-5.4q30.3-55.7 16.3-100.1c-33-26-52.8-59.2-52.8-95.4 0-83.1 104.3-150.5 232.8-150.5s232.9 67.4 232.9 150.5C517.9 342.5 413.6 409.9 285 409.9z"/></svg>
+</span>
+</div>
 
-    <div class="modal fade" id="chatModal" tabindex="-1" aria-labelledby="chatModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-fullscreen">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="chatModalLabel">Chat with Model</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="chat-loader">
-                        <div class="loader"></div>
-                    </div>
-                    <div id="chatbox" style="position: relative;"></div>
-                    <div class="input-group mt-3" id="chat-input-area">
-                        <input type="text" id="chat-input" class="form-control" placeholder="Ask a question...">
-                        <button id="chat-submit" class="btn btn-primary">Send</button>
-                        <button id="clear-history-btn" class="btn btn-secondary">Clear History</button>
-                    </div>
-                </div>
-            </div>
+<!-- Chat Assistant Box -->
+<div id="chat-assistant">
+    <div class="chat-header">
+        <h5>Chat Assistant</h5>
+        <button class="chat-close">&times;</button>
+    </div>
+    <div id="chatbox">
+        <div id="chat-loader">
+            <div class="loader"></div>
         </div>
+    </div>
+    <div id="chat-input-area">
+        <input type="text" id="chat-input" class="form-control" placeholder="Ask a question...">
+        <button id="chat-submit" class="btn btn-primary">Send</button>
+        <button id="clear-history-btn" class="btn btn-secondary btn-sm">Clear</button>
     </div>
 </div>
 
@@ -177,6 +317,9 @@
         let fileCount = 0;
         // Initialize Showdown converter
         const converter = new showdown.Converter();
+
+        // Chat history for local tracking
+        let chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
 
         $('#pdfFileInput').on('change', function() {
           const fileName = $(this).val().split("\\").pop();
@@ -251,7 +394,7 @@
 
        $('#processBtn').click(function () {
             $('#result').html('<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>');
-             $('#openChatBtn').hide();
+             $('#chatToggleBtn').hide();
 
             $.ajax({
                 url: '/process/',
@@ -297,7 +440,8 @@
                         } else {
                             $('#result').append('<div class="alert alert-warning" role="alert">No common items found.</div>');
                         }
-                        $('#openChatBtn').show();
+                        $('#chatToggleBtn').show();  // Show the chat toggle button after processing
+                        $('#chatToggleBtn').addClass('pulse');  // Add pulse animation to draw attention
                     } else {
                         $('#result').html('<div class="alert alert-danger" role="alert">' + data.error + '</div>');
                     }
@@ -308,9 +452,28 @@
             });
         });
 
-        // Load chat history when modal opens
-        $('#chatModal').on('show.bs.modal', function () {
-            const chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+        // Chat toggle functionality
+        $('#chatToggleBtn').click(function() {
+            $('#chat-assistant').show();
+            $('#chat-assistant').css('display', 'flex');
+            $(this).hide();
+            loadChatHistory();
+        });
+
+        $('.chat-header').click(function() {
+            $('#chat-assistant').toggle();
+            if($('#chat-assistant').is(':hidden')) {
+                $('#chatToggleBtn').show();
+            }
+        });
+
+        $('.chat-close').click(function() {
+            $('#chat-assistant').hide();
+            $('#chatToggleBtn').show();
+        });
+
+        function loadChatHistory() {
+            chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
             $('#chatbox').empty();  // Clear previous content
 
             // Convert Markdown to HTML and append to chatbox
@@ -319,28 +482,36 @@
                 const contentHtml = msg.role === 'Model' ? converter.makeHtml(msg.content) : msg.content;
                 $('#chatbox').append(`<div class="${messageClass}">${msg.role}: ${contentHtml}</div>`);
             });
-             $('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
-        });
-
-
-        function showChatLoader() {
-            $('#chat-loader').css('display', 'flex');
+            $('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
         }
 
-        function hideChatLoader() {
-            $('#chat-loader').hide();
+        function showTypingIndicator() {
+            // Add typing indicator
+            $('#chatbox').append(`
+                <div class="typing-indicator" id="typing-indicator">
+                    Model: <span></span><span></span><span></span>
+                </div>
+            `);
+            $('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
         }
 
+        function hideTypingIndicator() {
+            $('#typing-indicator').remove();
+        }
 
-        // Chat functionality (inside the modal)
+        // Chat functionality
         $('#chat-submit').click(function () {
             const message = $('#chat-input').val();
             if (message.trim() === '') return;
 
-            // No need to add user message here, it's handled on history load
+            // Immediately add user message to the chat
+            const userMessage = {role: 'You', content: message};
+            chatHistory.push(userMessage);
+            $('#chatbox').append(`<div class="user-message">You: ${message}</div>`);
+            $('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
 
             $('#chat-input').val('');
-            showChatLoader();
+            showTypingIndicator();
 
             $.ajax({
                 url: '/chat/',
@@ -348,31 +519,31 @@
                 data: JSON.stringify({ message: message }),
                 contentType: 'application/json',
                 success: function (data) {
-                    hideChatLoader();
+                    hideTypingIndicator();
                     if (data.success) {
-                       $('#chatbox').empty();
+                        // Instead of clearing and reloading the entire chat history,
+                        // just add the model's response
+                        const modelResponse = data.history[data.history.length - 1];
+                        if (modelResponse && modelResponse.role === 'Model') {
+                            const contentHtml = converter.makeHtml(modelResponse.content);
+                            $('#chatbox').append(`<div class="model-response">Model: ${contentHtml}</div>`);
 
-                        // Convert Markdown to HTML *on display*
-                        data.history.forEach(msg => {
-                            const messageClass = msg.role === 'You' ? 'user-message' : 'model-response';
-                            const contentHtml = msg.role === 'Model' ? converter.makeHtml(msg.content) : msg.content; // Convert here
-                            $('#chatbox').append(`<div class="${messageClass}">${msg.role}: ${contentHtml}</div>`);
-                        });
-
-                         localStorage.setItem('chatHistory', JSON.stringify(data.history));
+                            // Update local storage with complete history from server
+                            localStorage.setItem('chatHistory', JSON.stringify(data.history));
+                            chatHistory = data.history;
+                        }
                     } else {
                         $('#chatbox').append(`<div class="error-response">Error: ${data.error}</div>`);
                     }
                     $('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
                 },
                 error: function () {
-                    hideChatLoader();
+                    hideTypingIndicator();
                     $('#chatbox').append('<div class="error-response">An error occurred during chat.</div>');
                     $('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
                 }
             });
         });
-
 
         $('#clear-history-btn').click(function() {
             $.ajax({
@@ -383,6 +554,7 @@
                     if (data.success) {
                         $('#chatbox').empty();
                         localStorage.removeItem('chatHistory');
+                        chatHistory = [];
                     } else {
                         alert('Failed to clear chat history.');
                     }
